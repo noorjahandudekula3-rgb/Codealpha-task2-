@@ -1,0 +1,103 @@
+let activeProfileId = 1;
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadFeed();
+  loadProfile(1);
+});
+
+// Fetch and Render Feed
+async function loadFeed() {
+  const res = await fetch('/api/posts');
+  const posts = await res.json();
+  const feedEl = document.getElementById('feed');
+  feedEl.innerHTML = '';
+
+  posts.forEach(post => {
+    const postEl = document.createElement('div');
+    postEl.className = 'card';
+    
+    // Render Comments Markup
+    const commentsHtml = post.comments.map(c => `
+      <div class="comment"><strong>@${c.username}</strong>: ${c.text}</div>
+    `).join('');
+
+    postEl.innerHTML = `
+      <div class="post-header">@${post.username}</div>
+      <p>${post.content}</p>
+      <div class="post-actions">
+        <button class="like-btn" onclick="likePost(${post.id})">👍 Like (${post.likes})</button>
+      </div>
+      <div class="comments-section">
+        <div id="comments-${post.id}">${commentsHtml}</div>
+        <input type="text" id="input-${post.id}" class="comment-input" placeholder="Write a comment...">
+        <button style="padding:4px 8px; font-size:0.8rem;" onclick="addComment(${post.id})">Reply</button>
+      </div>
+    `;
+    feedEl.appendChild(postEl);
+  });
+}
+
+// Create New Post
+async function createPost() {
+  const content = document.getElementById('post-content').value;
+  if (!content) return;
+
+  await fetch('/api/posts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content })
+  });
+
+  document.getElementById('post-content').value = '';
+  loadFeed();
+}
+
+// Like Post Execution
+async function likePost(id) {
+  await fetch(`/api/posts/${id}/like`, { method: 'POST' });
+  loadFeed();
+}
+
+// Add Comment Execution
+async function addComment(postId) {
+  const input = document.getElementById(`input-${postId}`);
+  if (!input.value) return;
+
+  await fetch(`/api/posts/${postId}/comment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: input.value })
+  });
+
+  input.value = '';
+  loadFeed();
+}
+
+// Load and dynamic updates to Profile Card
+async function loadProfile(userId) {
+  activeProfileId = userId;
+  const res = await fetch(`/api/users/${userId}`);
+  const user = await res.json();
+
+  document.getElementById('profile-username').innerText = `@${user.username}`;
+  document.getElementById('profile-bio').innerText = user.bio || 'No bio yet.';
+  document.getElementById('profile-followers').innerText = user.followers;
+  document.getElementById('profile-following').innerText = user.following;
+
+  const followBtn = document.getElementById('follow-btn');
+  // Hide follow button if viewing your own profile (Alice / ID: 1)
+  if (userId === 1) {
+    followBtn.classList.add('hidden');
+  } else {
+    followBtn.classList.remove('hidden');
+    followBtn.innerText = user.isFollowing ? 'Unfollow' : 'Follow';
+    followBtn.onclick = () => toggleFollow(userId);
+  }
+}
+
+// Toggle Follow Execution
+async function toggleFollow(userId) {
+  const res = await fetch(`/api/users/${userId}/follow`, { method: 'POST' });
+  const data = await res.json();
+  loadProfile(userId);
+}
