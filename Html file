@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniSocial</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>🌐 MiniSocial</h1>
+    <div class="current-user">Logged in as: <strong>Alice</strong></div>
+  </header>
+
+  <main class="container">
+    <section class="sidebar">
+      <div class="card profile-card">
+        <h3>User Profile View</h3>
+        <p>Toggle profile context:</p>
+        <button onclick="loadProfile(1)">View Alice (My Profile)</button>
+        <button onclick="loadProfile(2)">View Bob</button>
+        <hr>
+        <h2 id="profile-username">Loading...</h2>
+        <p id="profile-bio"></p>
+        <div class="stats">
+          <span>Followers: <strong id="profile-followers">0</strong></span>
+          <span>Following: <strong id="profile-following">0</strong></span>
+        </div>
+        <button id="follow-btn" class="hidden">Follow</button>
+      </div>
+    </section>
+
+    <section class="feed-section">
+      <div class="card post-box">
+        <textarea id="post-content" placeholder="What's on your mind?"></textarea>
+        <button onclick="createPost()">Post</button>
+      </div>
+
+      <div id="feed">
+        </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
