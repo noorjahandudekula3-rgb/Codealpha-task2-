@@ -1,0 +1,55 @@
+const knex = require('knex')({
+  client: 'sqlite3',
+  connection: {
+    filename: './data.sqlite'
+  },
+  useNullAsDefault: true
+});
+
+async function initDB() {
+  // Users Table
+  if (!(await knex.schema.hasTable('users'))) {
+    await knex.schema.createTable('users', table => {
+      table.increments('id').primary();
+      table.string('username').unique().notNullable();
+      table.string('bio');
+    });
+    // Seed default users
+    await knex('users').insert([
+      { username: 'Alice', bio: 'Coding enthusiast 💻' },
+      { username: 'Bob', bio: 'Design is life 🎨' }
+    ]);
+  }
+
+  // Posts Table
+  if (!(await knex.schema.hasTable('posts'))) {
+    await knex.schema.createTable('posts', table => {
+      table.increments('id').primary();
+      table.integer('user_id').references('users.id');
+      table.text('content').notNullable();
+      table.integer('likes').defaultTo(0);
+      table.timestamp('created_at').defaultTo(knex.fn.now());
+    });
+  }
+
+  // Comments Table
+  if (!(await knex.schema.hasTable('comments'))) {
+    await knex.schema.createTable('comments', table => {
+      table.increments('id').primary();
+      table.integer('post_id').references('posts.id').onDelete('CASCADE');
+      table.integer('user_id').references('users.id');
+      table.text('text').notNullable();
+    });
+  }
+
+  // Followers Table (Self-referencing M:N)
+  if (!(await knex.schema.hasTable('followers'))) {
+    await knex.schema.createTable('followers', table => {
+      table.integer('follower_id').references('users.id');
+      table.integer('following_id').references('users.id');
+      table.primary(['follower_id', 'following_id']);
+    });
+  }
+}
+
+module.exports = { knex, initDB };
